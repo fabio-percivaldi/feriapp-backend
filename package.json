@@ -1,0 +1,24 @@
+{
+  "name": "kazzenger-backend",
+  "version": "0.0.1",
+  "description": "**Edit a file, create a new file, and clone from Bitbucket in under 2 minutes**",
+  "main": "index.js",
+  "scripts": {
+    "test": "tap test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@bitbucket.org/kazzenger/kazzenger-backend.git"
+  },
+  "devDependencies": {
+    "@mia-platform/eslint-config-mia": "^2.0.0",
+    "eslint": "^5.3.0",
+    "tap": "^14.2.3"
+  },
+  "eslintConfig": {
+    "extends": "@mia-platform/eslint-config-mia"
+  },
+  "author": "",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/kazzenger/kazzenger-backend#readme"
+}
