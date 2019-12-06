@@ -11,7 +11,7 @@ module.exports.bridges = (event, context, callback) => {
   const config = { country: 'IT', state: '', region: '', city: 'Milan', daysOff: [0, 6], customHolidays: null }
   const kazzenger = new Kazzenger(config)
 
-  const response = kazzenger.bridges({
+  const calculatedBridges = kazzenger.bridges({
     start: moment()
       .subtract(2, 'months')
       .toDate(),
@@ -21,5 +21,11 @@ module.exports.bridges = (event, context, callback) => {
     maxHolidaysDistance: 2,
     maxAvailability: 2,
   })
+  const response = {
+    isBase64Encoded: false,
+    statusCode: 200,
+    headers: {},
+    body: JSON.stringify(calculatedBridges),
+  }
   callback(null, response)
 }
