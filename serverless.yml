@@ -43,7 +43,7 @@ provider:
 
 functions:
   bridges:
-    handler: handler.bridges
+    handler: bridgesHandler.bridges
     vpc:
      securityGroupIds:
       - ${env:SECURITY_GROUP}
@@ -73,7 +73,7 @@ functions:
             arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_lVSzMqLAa
 
   getIgMedia:
-    handler: handler.getIgMedia
+    handler: igHandler.getIgMedia
     environment:
       IG_CLIENT_ID: ${env:IG_CLIENT_ID}
       IG_APP_SECRET: ${env:IG_APP_SECRET}
@@ -108,7 +108,7 @@ functions:
             arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_lVSzMqLAa
 
   updateIgMedia: 
-    handler: handler.updateIgMedia
+    handler: igHandler.updateIgMedia
     environment:
       IG_CLIENT_ID: ${env:IG_CLIENT_ID}
       IG_APP_SECRET: ${env:IG_APP_SECRET}

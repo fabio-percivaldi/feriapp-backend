@@ -1,10 +1,8 @@
 'use strict'
-const logger = require('pino')()
-const Kazzenger = require('./src/kazzenger')
-const moment = require('moment')
+
 const axios = require('axios')
-const log = require('pino')()
-const { Media, sequelize } = require('./media')
+const logger = require('pino')()
+const { Media } = require('./media')
 const { IG_ACCESS_TOKEN, IG_CLIENT_ID } = process.env
 
 const igClient = axios.create({
@@ -13,32 +11,7 @@ const igClient = axios.create({
     access_token: IG_ACCESS_TOKEN,
   },
 })
-module.exports.bridges = (event, context, callback) => {
-  if (event.source === 'serverless-plugin-warmup') {
-    logger.info('WarmUP - Lambda is warm!')
-    return callback(null, 'Lambda is warm!')
-  }
-  const config = { country: 'IT', state: '', region: '', city: 'Milan', daysOff: [0, 6], customHolidays: null }
-  const kazzenger = new Kazzenger(config)
 
-  const calculatedBridges = kazzenger.bridges({
-    start: moment()
-      .subtract(2, 'months')
-      .toDate(),
-    end: moment()
-      .add(2, 'months')
-      .toDate(),
-    maxHolidaysDistance: 2,
-    maxAvailability: 2,
-  })
-  const response = {
-    isBase64Encoded: false,
-    statusCode: 200,
-    headers: {},
-    body: JSON.stringify(calculatedBridges),
-  }
-  callback(null, response)
-}
 
 module.exports.updateIgMedia = (event, context, callback) => {
   let mediaIds = []
@@ -72,11 +45,11 @@ module.exports.updateIgMedia = (event, context, callback) => {
               callback(null, response)
             })
             .catch(allError => {
-              log.error(allError)
+              logger.error(allError)
             })
         })
         .catch(error => {
-          log.error(error)
+          logger.error(error)
         })
     })
 }

@@ -1,60 +1,57 @@
 /* eslint-disable global-require */
-/* eslint-disable no-shadow */
 'use strict'
 
+const moment = require('moment')
 const Holidays = require('date-holidays')
 const MILLISECONDS_IN_A_DAY = 1000 * 60 * 60 * 24
-const logger = require('pino')
-const localHolidays = {
-  it: require('../data/it-holidays'),
-}
-
+// const localHolidays = {
+//   it: require('../data/it-holidays'),
+// }
 // https://github.com/commenthol/date-holidays-parser/blob/master/docs/Holidays.md#holidayssetholidayrule-opts
-function Kazzenger({ country, state, region, city, daysOff, customHolidays }) {
+function Kazzenger({ country, state, region, /* city,*/ daysOff, customHolidays }) {
   this.daysOff = daysOff || [0, 6]
   this.holidays = new Holidays()
-  this.holidays.init(country, state, region)
+  this.country = country
+  this.state = state
+  this.region = region
+  this.holidays.init(this.country, this.state, this.region)
   if (customHolidays) {
-    setHolidays(this.holidays, customHolidays)
-  }
-  if (!city) {
-    return
-  }
-  const localHolidays = getLocalHolidays({ country, state, region, city })
-  if (localHolidays) {
-    setHolidays(this.holidays, localHolidays)
+    this.addHolidays(customHolidays, this.holidays)
   }
 }
 
-function getLocalHolidays({ country, city }) {
-  const holidays = localHolidays[country.toLowerCase()]
-  if (!holidays || !city) {
-    return holidays
-  }
-  const cityLowerCase = city.toLowerCase()
-  return holidays.filter(holiday => holiday.city.toLowerCase() === cityLowerCase)
-}
-Kazzenger.localHolidays = getLocalHolidays
+Kazzenger.prototype.addHolidays = function addHolidays(holidays, holidaysLib = this.holidays) {
+  let currentHolidays = holidaysLib.getHolidays()
+  this.holidays.init(this.country, this.state, this.region)
 
-function getCities({ country }) {
-  const holidays = getLocalHolidays({ country })
-  if (!holidays) {
-    return []
-  }
-  return Array.from(holidays.reduce((cities, holiday) => {
-    cities.add(holiday.city)
-    return cities
-  }, new Set()))
-}
-Kazzenger.cities = getCities
-
-function setHolidays(holidaysLib, holidays) {
   holidays.forEach(holiday => {
-    logger.info(`will add holiday ${JSON.stringify(holiday)}`)
-    if (!holidaysLib.setHoliday(holiday.date, holiday.name)) {
-      logger.error('error', `loadITCityHolidays > setHoliday( ${JSON.stringify(holiday)} > FAIL`)
+    const foundHoliday = currentHolidays.find(current => {
+      const date1 = moment(current.date).format('YYYY-MM-DD')
+      const date2 = moment(holiday.date).format('YYYY-MM-DD')
+      return date1 === date2
+    })
+
+    if (foundHoliday) {
+      currentHolidays.splice(currentHolidays.indexOf(foundHoliday), 1)
+    } else {
+      currentHolidays.push({ date: moment(holiday.date), name: holiday.name })
     }
   })
+  currentHolidays.forEach(holiday => {
+    const formattedDate = moment(holiday.date).format('MM-DD')
+    holidaysLib.setHoliday(formattedDate, holiday.name)
+  })
+  currentHolidays = holidaysLib.getHolidays()
+}
+Kazzenger.prototype.isHolidayOrWeekend = function isHolidayOrWeekend(momentDay) {
+  const isWeekend = this.daysOff.includes(parseInt(momentDay.format('d')))
+  const holidays = this.holidays.getHolidays()
+  const foundholiday = holidays.find(holiday => moment(holiday.date).format('MM-DD') === momentDay.format('MM-DD'))
+  return {
+    isWeekend,
+    isHoliday: Boolean(foundholiday),
+    holidayName: foundholiday ? foundholiday.name : null,
+  }
 }
 
 Kazzenger.prototype.isDayOff = function isDayOff(date) {
@@ -166,7 +163,7 @@ Kazzenger.prototype.bridges = function bridges({ start, end, maxHolidaysDistance
     lastEndBridgeDate: null,
     date: start,
   }
-  const holidays = this.getHolidays(start, end).sort((first, second) => first.start - second.start)
+  const holidays = this.getHolidays(start, end).sort((aaa, bbb) => aaa.start - bbb.start)
   let offset = 0
   while (data.date <= end) {
     const { isHoliday, offset: nextOffset } = this.isHolidayOptimized(data.date, holidays, offset)
@@ -181,6 +178,14 @@ Kazzenger.prototype.bridges = function bridges({ start, end, maxHolidaysDistance
   bridgesHandleCloseAll(data)
   return data.result
 }
+function bridgesByMonthsCreateKey(bridge) {
+  const startMonth = bridge.start.getMonth()
+  const endMonth = bridge.end.getMonth()
+  if (startMonth === endMonth) {
+    return `${startMonth}`
+  }
+  return `${startMonth},${endMonth}`
+}
 
 function bridgesByYearsCreateKey(bridge) {
   const startYear = bridge.start.getFullYear()
@@ -194,7 +199,34 @@ function bridgesByYearsCreateKey(bridge) {
 function bridgesByYearsKeyToArray(key) {
   return key.split(',').map(year => parseInt(year, 10))
 }
-
+Kazzenger.prototype.bridgesByMonth = function bridgesByMonth(input) {
+  const mapByMonths = this.bridges(input)
+    .reduce((acc, bridge) => {
+      const key = bridgesByMonthsCreateKey(bridge)
+      const bridges = acc[key] || []
+      bridges.push(bridge)
+      acc[key] = bridges
+      return acc
+    }, {})
+  return Object.keys(mapByMonths)
+    .sort()
+    .reduce((acc, key) => {
+      const bridges = mapByMonths[key]
+      const stats = bridges
+        .reduce((accc, bridge) => {
+          accc.holidaysCount += bridge.holidaysCount
+          accc.weekdaysCount += bridge.weekdaysCount
+          accc.daysCount += bridge.daysCount
+          return accc
+        }, { holidaysCount: 0, weekdaysCount: 0, daysCount: 0 })
+      acc.push({
+        months: bridgesByYearsKeyToArray(key),
+        bridges,
+        ...stats,
+      })
+      return acc
+    }, [])
+}
 Kazzenger.prototype.bridgesByYears = function bridgesByYears(input) {
   const mapByYears = this.bridges(input)
     .reduce((acc, bridge) => {
@@ -209,11 +241,11 @@ Kazzenger.prototype.bridgesByYears = function bridgesByYears(input) {
     .reduce((acc, key) => {
       const bridges = mapByYears[key]
       const stats = bridges
-        .reduce((acc, bridge) => {
-          acc.holidaysCount += bridge.holidaysCount
-          acc.weekdaysCount += bridge.weekdaysCount
-          acc.daysCount += bridge.daysCount
-          return acc
+        .reduce((accc, bridge) => {
+          accc.holidaysCount += bridge.holidaysCount
+          accc.weekdaysCount += bridge.weekdaysCount
+          accc.daysCount += bridge.daysCount
+          return accc
         }, { holidaysCount: 0, weekdaysCount: 0, daysCount: 0 })
       acc.push({
         years: bridgesByYearsKeyToArray(key),
