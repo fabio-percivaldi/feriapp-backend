@@ -109,6 +109,8 @@ functions:
 
   updateIgMedia: 
     handler: igHandler.updateIgMedia
+    warmup:
+      enabled: false
     environment:
       IG_CLIENT_ID: ${env:IG_CLIENT_ID}
       IG_APP_SECRET: ${env:IG_APP_SECRET}

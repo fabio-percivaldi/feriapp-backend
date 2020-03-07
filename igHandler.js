@@ -13,59 +13,59 @@ const igClient = axios.create({
 })
 
 
-module.exports.updateIgMedia = (event, context, callback) => {
+module.exports.updateIgMedia = async(event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false
+  if (event.source === 'serverless-plugin-warmup') {
+    logger.info('WarmUP - Lambda is warm!')
+    return callback(null, 'Lambda is warm!')
+  }
   let mediaIds = []
-  Media.sync({ force: true })
-    .then(() => {
-      igClient.get(`${IG_CLIENT_ID}/media?access_token=${IG_ACCESS_TOKEN}`)
-        .then(listResponse => {
-          const { data } = listResponse.data
-          const recentMedia = data.slice(0, 5)
-          Promise.all(recentMedia.map(media => {
-            return igClient.get(`${media.id}?access_token=${IG_ACCESS_TOKEN}&fields=caption,media_url,permalink`)
-          }))
-            .then(responses => {
-              mediaIds = responses.map(resp => resp.data.id)
-              Media.bulkCreate(responses.map(response => {
-                return {
-                  mediaId: response.data.id,
-                  mediaUrl: response.data.media_url,
-                  permaurl: response.data.permalink,
-                  caption: response.data.caption,
-                }
-              }))
-              const response = {
-                isBase64Encoded: false,
-                statusCode: 200,
-                headers: {},
-                body: JSON.stringify({
-                  mediaIds,
-                }),
-              }
-              callback(null, response)
-            })
-            .catch(allError => {
-              logger.error(allError)
-            })
-        })
-        .catch(error => {
-          logger.error(error)
-        })
+  await Media.destroy({ truncate: true })
+
+  const listResponse = await igClient.get(`${IG_CLIENT_ID}/media?access_token=${IG_ACCESS_TOKEN}`)
+  const { data } = listResponse.data
+  const recentMedia = data.slice(0, 5)
+  await Promise.all(recentMedia.map(media => {
+    return igClient.get(`${media.id}?access_token=${IG_ACCESS_TOKEN}&fields=caption,media_url,permalink`)
+  }))
+    .then(async responses => {
+      mediaIds = responses.map(resp => resp.data.id)
+
+      await Media.bulkCreate(responses.map(response => {
+        return {
+          mediaId: response.data.id,
+          mediaUrl: response.data.media_url,
+          permaurl: response.data.permalink,
+          caption: response.data.caption,
+        }
+      }))
+      const response = {
+        isBase64Encoded: false,
+        statusCode: 200,
+        headers: {},
+        body: JSON.stringify({
+          mediaIds,
+        }),
+      }
+      callback(null, response)
     })
 }
-module.exports.getIgMedia = (event, context, callback) => {
+module.exports.getIgMedia = async(event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false
-  let media = []
-  Media.findAll().then(async res => {
-    media = res.map(data => data.dataValues)
-    const response = {
-      isBase64Encoded: false,
-      statusCode: 200,
-      headers: {},
-      body: JSON.stringify({
-        media,
-      }),
-    }
-    callback(null, response)
-  })
+  if (event.source === 'serverless-plugin-warmup') {
+    logger.info('WarmUP - Lambda is warm!')
+    return callback(null, 'Lambda is warm!')
+  }
+  const mediaList = await Media.findAll()
+  const media = mediaList.map(data => data.dataValues)
+
+  const response = {
+    isBase64Encoded: false,
+    statusCode: 200,
+    headers: {},
+    body: JSON.stringify({
+      media,
+    }),
+  }
+  callback(null, response)
 }
