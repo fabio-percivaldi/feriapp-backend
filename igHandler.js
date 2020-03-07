@@ -42,7 +42,10 @@ module.exports.updateIgMedia = async(event, context, callback) => {
       const response = {
         isBase64Encoded: false,
         statusCode: 200,
-        headers: {},
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': true,
+        },
         body: JSON.stringify({
           mediaIds,
         }),
@@ -62,7 +65,10 @@ module.exports.getIgMedia = async(event, context, callback) => {
   const response = {
     isBase64Encoded: false,
     statusCode: 200,
-    headers: {},
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': true,
+    },
     body: JSON.stringify({
       media,
     }),

@@ -4,6 +4,7 @@ const Kazzenger = require('./src/kazzenger')
 const moment = require('moment')
 
 module.exports.bridges = (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false
   if (event.source === 'serverless-plugin-warmup') {
     logger.info('WarmUP - Lambda is warm!')
     return callback(null, 'Lambda is warm!')
@@ -42,7 +43,10 @@ module.exports.bridges = (event, context, callback) => {
   const response = {
     isBase64Encoded: false,
     statusCode: 200,
-    headers: {},
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': true,
+    },
     body: JSON.stringify(calculatedBridges),
   }
   callback(null, response)
