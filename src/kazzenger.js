@@ -225,7 +225,6 @@ function bridgesByYearsKeyToArray(key) {
 }
 Kazzenger.prototype.bridgesByYears = function bridgesByYears(input) {
   const calculatedBridges = this.bridges(input)
-  console.log('|||||||||||||||||||', calculatedBridges)
   const mapByYears = calculatedBridges.reduce((acc, bridge) => {
     const key = bridgesByYearsCreateKey(bridge)
     const bridges = acc[key] || []

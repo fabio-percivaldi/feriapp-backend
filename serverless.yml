@@ -146,39 +146,36 @@ functions:
       subnetIds:
         - ${env:SUBNET_1}
         - ${env:SUBNET_2}
-  # getNearestAirport:
-  #   handler: flightsHandler.getNearestAirport
-  #   environment:
-  #     IG_CLIENT_ID: ${env:IG_CLIENT_ID}
-  #     IG_APP_SECRET: ${env:IG_APP_SECRET}
-  #     IG_ACCESS_TOKEN: ${env:IG_ACCESS_TOKEN}
-  #     MYSQL_URL: ${env:MYSQL_URL}
-  #   vpc:
-  #     securityGroupIds:
-  #       - ${env:SECURITY_GROUP}
-  #     subnetIds:
-  #       - ${env:SUBNET_1}
-  #       - ${env:SUBNET_2}
-  #   events:
-  #     - http:
-  #         path: getNearestAirport
-  #         method: get
-  #         cors: true
-  #     - http: 
-  #         path: getNearestAirport
-  #         method: get
-  #         cors: 
-  #           origin: '*'
-  #           headers:
-  #               - Content-Type
-  #               - X-Amz-Date
-  #               - Authorization
-  #               - X-Api-Key
-  #               - X-Amz-Security-Token
-  #               - X-Amz-User-Agent
-  #               - username
-  #       authorizer:
-  #           name: feriapp-user-pool-auth
-  #           arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_lVSzMqLAa
+  getFlights:
+    handler: flightsHandler.getFlights
+    environment:
+      AERODATABOX_API_HOST: ${env:AERODATABOX_API_HOST}
+      RAPID_API_KEY: ${env:RAPID_API_KEY}
+      AERODATABOX_API_URL: ${env:AERODATABOX_API_URL}
+      GOOGLE_API_URL: ${env:GOOGLE_API_URL}
+      GOOGLE_API_KEY: ${env:GOOGLE_API_KEY}
+    vpc:
+      securityGroupIds:
+        - ${env:SECURITY_GROUP}
+      subnetIds:
+        - ${env:SUBNET_1}
+        - ${env:SUBNET_2}
+    events:
+      - http: 
+          path: getFlights
+          method: get
+          cors: 
+            origin: '*'
+            headers:
+                - Content-Type
+                - X-Amz-Date
+                - Authorization
+                - X-Api-Key
+                - X-Amz-Security-Token
+                - X-Amz-User-Agent
+                - username
+        authorizer:
+            name: feriapp-user-pool-auth
+            arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_lVSzMqLAa
           
         
