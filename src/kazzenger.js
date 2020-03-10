@@ -4,25 +4,10 @@
 const moment = require('moment')
 const Holidays = require('date-holidays')
 const MILLISECONDS_IN_A_DAY = 1000 * 60 * 60 * 24
-// const localHolidays = {
-//   it: require('../data/it-holidays'),
-// }
-// https://github.com/commenthol/date-holidays-parser/blob/master/docs/Holidays.md#holidayssetholidayrule-opts
-function Kazzenger({ country, state, region, /* city,*/ daysOff, customHolidays }) {
-  this.daysOff = daysOff || [0, 6]
-  this.holidays = new Holidays()
-  this.country = country
-  this.state = state
-  this.region = region
-  this.holidays.init(this.country, this.state, this.region)
-  if (customHolidays) {
-    this.addHolidays(customHolidays, this.holidays)
-  }
-}
-
-Kazzenger.prototype.addHolidays = function addHolidays(holidays, holidaysLib = this.holidays) {
-  let currentHolidays = holidaysLib.getHolidays()
-  this.holidays.init(this.country, this.state, this.region)
+const PUBLIC_HOLIDAY = 'public'
+const addHolidays = (holidays, holidaysLib = this.holidays) => {
+  const currentHolidays = holidaysLib.getHolidays()
+  holidaysLib.init(this.country, this.state, this.region)
 
   holidays.forEach(holiday => {
     const foundHoliday = currentHolidays.find(current => {
@@ -41,11 +26,20 @@ Kazzenger.prototype.addHolidays = function addHolidays(holidays, holidaysLib = t
     const formattedDate = moment(holiday.date).format('MM-DD')
     holidaysLib.setHoliday(formattedDate, holiday.name)
   })
-  currentHolidays = holidaysLib.getHolidays()
 }
+function Kazzenger({ country, daysOff, customHolidays }) {
+  this.daysOff = daysOff || [0, 6]
+  this.holidays = new Holidays()
+  this.country = country
+  this.holidays.init(this.country)
+  if (customHolidays) {
+    addHolidays(customHolidays, this.holidays)
+  }
+}
+
 Kazzenger.prototype.isHolidayOrWeekend = function isHolidayOrWeekend(momentDay) {
   const isWeekend = this.daysOff.includes(parseInt(momentDay.format('d')))
-  const holidays = this.holidays.getHolidays()
+  const holidays = this.holidays.getHolidays().filter(holiday => holiday.type === PUBLIC_HOLIDAY)
   const foundholiday = holidays.find(holiday => moment(holiday.date).format('MM-DD') === momentDay.format('MM-DD'))
   return {
     isWeekend,
@@ -60,11 +54,11 @@ Kazzenger.prototype.isDayOff = function isDayOff(date) {
 
 Kazzenger.prototype.getHolidays = function getHolidays(start, end) {
   if (start.getFullYear() === end.getFullYear()) {
-    return this.holidays.getHolidays(start)
+    return this.holidays.getHolidays(start).filter(holiday => holiday.type === PUBLIC_HOLIDAY)
   }
   let holidays = this.holidays.getHolidays(start)
   for (let year = start.getFullYear() + 1; year <= end.getFullYear(); year++) {
-    holidays = holidays.concat(this.holidays.getHolidays(year))
+    holidays = holidays.concat(this.holidays.getHolidays(year).filter(holiday => holiday.type === PUBLIC_HOLIDAY))
   }
   return holidays
 }
@@ -151,7 +145,41 @@ function bridgesHandleCloseAll(data) {
     index -= 1
   }
 }
+Kazzenger.prototype.findWeekendBridge = function findWeekendBridge(holidays) {
+  const bridges = []
+  holidays.forEach(holiday => {
+    const holidayDate = moment(`${holiday.date}Z`)
+    if (holidayDate.isBefore(moment())) {
+      return
+    }
+    const holidayWeekDay = holidayDate.weekday()
+    let bridgeStart
+    let bridgeEnd
+    if (holidayWeekDay === 1) {
+      bridgeStart = moment(holidayDate).subtract(2, 'days')
+      bridgeEnd = holidayDate
+    }
+    if (holidayWeekDay === 5) {
+      bridgeEnd = moment(holidayDate).add(2, 'days')
+      bridgeStart = holidayDate
+    }
+    if (bridgeStart && bridgeEnd) {
+      const bridgeId = `${bridgeStart.format('YYYY-MM-DD')}-${bridgeEnd.format('YYYY-MM-DD')}`
 
+      const bridge = {
+        id: bridgeId,
+        holidayDate: holidayDate.toDate(),
+        start: bridgeStart.toDate(),
+        end: bridgeEnd.toDate(),
+        holidaysCount: 3,
+        weekdaysCount: 0,
+        daysCount: 0,
+      }
+      bridges.push(bridge)
+    }
+  })
+  return bridges
+}
 Kazzenger.prototype.bridges = function bridges({ start, end, maxHolidaysDistance, maxAvailability }) {
   const data = {
     daysOff: this.daysOff,
@@ -164,6 +192,10 @@ Kazzenger.prototype.bridges = function bridges({ start, end, maxHolidaysDistance
     date: start,
   }
   const holidays = this.getHolidays(start, end).sort((aaa, bbb) => aaa.start - bbb.start)
+  if (maxAvailability === 0) {
+    const weekendBridges = this.findWeekendBridge(holidays)
+    return weekendBridges
+  }
   let offset = 0
   while (data.date <= end) {
     const { isHoliday, offset: nextOffset } = this.isHolidayOptimized(data.date, holidays, offset)
@@ -178,14 +210,6 @@ Kazzenger.prototype.bridges = function bridges({ start, end, maxHolidaysDistance
   bridgesHandleCloseAll(data)
   return data.result
 }
-function bridgesByMonthsCreateKey(bridge) {
-  const startMonth = bridge.start.getMonth()
-  const endMonth = bridge.end.getMonth()
-  if (startMonth === endMonth) {
-    return `${startMonth}`
-  }
-  return `${startMonth},${endMonth}`
-}
 
 function bridgesByYearsCreateKey(bridge) {
   const startYear = bridge.start.getFullYear()
@@ -199,43 +223,16 @@ function bridgesByYearsCreateKey(bridge) {
 function bridgesByYearsKeyToArray(key) {
   return key.split(',').map(year => parseInt(year, 10))
 }
-Kazzenger.prototype.bridgesByMonth = function bridgesByMonth(input) {
-  const mapByMonths = this.bridges(input)
-    .reduce((acc, bridge) => {
-      const key = bridgesByMonthsCreateKey(bridge)
-      const bridges = acc[key] || []
-      bridges.push(bridge)
-      acc[key] = bridges
-      return acc
-    }, {})
-  return Object.keys(mapByMonths)
-    .sort()
-    .reduce((acc, key) => {
-      const bridges = mapByMonths[key]
-      const stats = bridges
-        .reduce((accc, bridge) => {
-          accc.holidaysCount += bridge.holidaysCount
-          accc.weekdaysCount += bridge.weekdaysCount
-          accc.daysCount += bridge.daysCount
-          return accc
-        }, { holidaysCount: 0, weekdaysCount: 0, daysCount: 0 })
-      acc.push({
-        months: bridgesByYearsKeyToArray(key),
-        bridges,
-        ...stats,
-      })
-      return acc
-    }, [])
-}
 Kazzenger.prototype.bridgesByYears = function bridgesByYears(input) {
-  const mapByYears = this.bridges(input)
-    .reduce((acc, bridge) => {
-      const key = bridgesByYearsCreateKey(bridge)
-      const bridges = acc[key] || []
-      bridges.push(bridge)
-      acc[key] = bridges
-      return acc
-    }, {})
+  const calculatedBridges = this.bridges(input)
+  console.log('|||||||||||||||||||', calculatedBridges)
+  const mapByYears = calculatedBridges.reduce((acc, bridge) => {
+    const key = bridgesByYearsCreateKey(bridge)
+    const bridges = acc[key] || []
+    bridges.push(bridge)
+    acc[key] = bridges
+    return acc
+  }, {})
   return Object.keys(mapByYears)
     .sort()
     .reduce((acc, key) => {
