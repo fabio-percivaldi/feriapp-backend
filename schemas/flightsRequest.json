@@ -1,0 +1,30 @@
+{
+    "type": "object",
+    "required": [
+        "originCity",
+        "outboundDate",
+        "inboundDate"
+    ],
+    "properties": {
+        "originCity": {
+            "type": "string",
+            "description": "It should be the complete city name with the province attached"
+        },
+        "outboundDate": {
+            "type": "string",
+            "description": "Date of departure"
+        },
+        "inboundDate": {
+            "type": "string",
+            "description": "Date of return"
+        },
+        "currency": {
+            "type": "string",
+            "default": "USD"
+        },
+        "locale": {
+            "type": "string",
+            "default": "en-US"
+        }
+    }
+}

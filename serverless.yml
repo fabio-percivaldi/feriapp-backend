@@ -67,9 +67,9 @@ functions:
                 - X-Amz-Security-Token
                 - X-Amz-User-Agent
                 - username
-        authorizer:
-            name: feriapp-user-pool-auth
-            arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_lVSzMqLAa
+          authorizer:
+              name: feriapp-user-pool-auth
+              arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
   
   getHolidaysByCity:
     handler: bridgesHandler.getHolidaysByCity
@@ -96,9 +96,9 @@ functions:
                 - X-Amz-Security-Token
                 - X-Amz-User-Agent
                 - username
-        authorizer:
-            name: feriapp-user-pool-auth
-            arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_lVSzMqLAa
+          authorizer:
+              name: feriapp-user-pool-auth
+              arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
 
   igMedia:
     handler: igHandler.igMedia
@@ -127,9 +127,9 @@ functions:
                 - X-Amz-Security-Token
                 - X-Amz-User-Agent
                 - username
-        authorizer:
-            name: feriapp-user-pool-auth
-            arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_lVSzMqLAa
+          authorizer:
+              name: feriapp-user-pool-auth
+              arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
 
   updateIgMedia: 
     handler: igHandler.updateIgMedia
@@ -164,6 +164,14 @@ functions:
       - http: 
           path: flights
           method: get
+          request: 
+            parameters:
+              querystrings:
+                originCity: true
+                outboundDate: true
+                inboundDate: true
+                currency: true
+                locale: true
           cors: 
             origin: '*'
             headers:
@@ -174,8 +182,8 @@ functions:
                 - X-Amz-Security-Token
                 - X-Amz-User-Agent
                 - username
-        authorizer:
-            name: feriapp-user-pool-auth
-            arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_lVSzMqLAa
+          authorizer:
+              name: feriapp-user-pool-auth
+              arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
           
         
