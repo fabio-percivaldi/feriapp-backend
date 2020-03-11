@@ -145,6 +145,35 @@ function bridgesHandleCloseAll(data) {
     index -= 1
   }
 }
+const getAdiacentBridge = (bridges, holidayDate) => {
+  const foundBridge = {
+    bridgeId: null,
+    isBefore: false,
+  }
+  bridges.forEach(bridge => {
+    const dayBeforeStart = moment(bridge.start).subtract(1, 'days')
+    const dayAfterEnd = moment(bridge.end).add(1, 'days')
+    if (holidayDate.isSame(dayBeforeStart, 'days')) {
+      foundBridge.bridgeId = bridge.id
+      foundBridge.isBefore = true
+    }
+    if (holidayDate.isSame(dayAfterEnd, 'days')) {
+      foundBridge.bridgeId = bridge.id
+    }
+  })
+  return foundBridge
+}
+const updateBridge = (bridge, isBefore, holidayDate) => {
+  if (isBefore) {
+    bridge.start = holidayDate.toDate()
+  } else {
+    bridge.end = holidayDate.toDate()
+  }
+  bridge.id = `${moment(bridge.start).format('YYYY-MM-DD')}-${moment(bridge.end).format('YYYY-MM-DD')}`
+  bridge.holidaysCount += 1
+  bridge.daysCount += 1
+}
+
 Kazzenger.prototype.findWeekendBridge = function findWeekendBridge(holidays) {
   const bridges = []
   holidays.forEach(holiday => {
@@ -173,9 +202,20 @@ Kazzenger.prototype.findWeekendBridge = function findWeekendBridge(holidays) {
         end: bridgeEnd.toDate(),
         holidaysCount: 3,
         weekdaysCount: 0,
-        daysCount: 0,
+        daysCount: 3,
       }
       bridges.push(bridge)
+    }
+  })
+  holidays.forEach(holiday => {
+    const holidayDate = moment(`${holiday.date}Z`)
+    if (holidayDate.isBefore(moment())) {
+      return
+    }
+    const adiacentBridge = getAdiacentBridge(bridges, holidayDate)
+    if (adiacentBridge.bridgeId) {
+      const existingBridge = bridges.find(bridge => bridge.id === adiacentBridge.bridgeId)
+      updateBridge(existingBridge, adiacentBridge.isBefore, holidayDate)
     }
   })
   return bridges
