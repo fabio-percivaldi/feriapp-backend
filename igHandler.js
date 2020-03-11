@@ -53,7 +53,7 @@ module.exports.updateIgMedia = async(event, context, callback) => {
       callback(null, response)
     })
 }
-module.exports.getIgMedia = async(event, context, callback) => {
+module.exports.igMedia = async(event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false
   if (event.source === 'serverless-plugin-warmup') {
     logger.info('WarmUP - Lambda is warm!')

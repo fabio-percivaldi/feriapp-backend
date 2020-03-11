@@ -100,8 +100,8 @@ functions:
             name: feriapp-user-pool-auth
             arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_lVSzMqLAa
 
-  getIgMedia:
-    handler: igHandler.getIgMedia
+  igMedia:
+    handler: igHandler.igMedia
     environment:
       IG_CLIENT_ID: ${env:IG_CLIENT_ID}
       IG_APP_SECRET: ${env:IG_APP_SECRET}
@@ -115,7 +115,7 @@ functions:
         - ${env:SUBNET_2}
     events:
       - http: 
-          path: getIgMedia
+          path: igMedia
           method: get
           cors: 
             origin: '*'
@@ -146,10 +146,11 @@ functions:
       subnetIds:
         - ${env:SUBNET_1}
         - ${env:SUBNET_2}
-  getFlights:
-    handler: flightsHandler.getFlights
+  flights:
+    handler: flightsHandler.flights
     environment:
       AERODATABOX_API_HOST: ${env:AERODATABOX_API_HOST}
+      SKYSCANNER_API_HOST: ${env:SKYSCANNER_API_HOST}
       RAPID_API_KEY: ${env:RAPID_API_KEY}
       AERODATABOX_API_URL: ${env:AERODATABOX_API_URL}
       GOOGLE_API_URL: ${env:GOOGLE_API_URL}
@@ -162,7 +163,7 @@ functions:
         - ${env:SUBNET_2}
     events:
       - http: 
-          path: getFlights
+          path: flights
           method: get
           cors: 
             origin: '*'

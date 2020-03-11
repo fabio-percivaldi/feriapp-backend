@@ -1,3 +1,4 @@
+/* eslint-disable max-statements */
 'use strict'
 
 const axios = require('axios')
@@ -8,9 +9,10 @@ const {
   GOOGLE_API_URL,
   GOOGLE_API_KEY,
   SKYSCANNER_API_HOST,
+  TRAVELPAYOUT_MARKER,
 } = process.env
 const { getResponseObject, getCountryByCity } = require('./common')
-
+const BASE_REFERRAL_URL = 'https://search.jetradar.com/flights/?'
 const airportsfinderClient = axios.create({
   baseURL: `https://${AERODATABOX_API_HOST}`,
   headers: {
@@ -37,19 +39,96 @@ const getNearestAirportCity = async(city) => {
   }
   return null
 }
-
-module.exports.getFlights = async(event, context, callback) => {
+const generateReferralLink = (flight) => {
+  const originIata = flight.OriginPlace.IataCode
+  const destinationIata = flight.quote.DestinationPlace.IataCode
+  const inboundDate = flight.InboundDate
+  const outboundDate = flight.OutboundDate
+  return `${BASE_REFERRAL_URL}origin_iata=${originIata}\
+&destination_iata=${destinationIata}\
+&depart_date=${outboundDate}\
+&return_date=${inboundDate}\
+&with_request=false\
+&adults=1\
+&children=0\
+&infants=0\
+&trip_class=0\
+&locale=en\
+&one_way=false\
+&marker=${TRAVELPAYOUT_MARKER}`
+}
+const getFlightsResponse = (cheapestFlights, Quotes, Places, inboundDate, outboundDate) => {
+  cheapestFlights.forEach(flight => {
+    flight.InboundDate = moment(inboundDate).format('YYYY-MM-DD')
+    flight.OutboundDate = moment(outboundDate).format('YYYY-MM-DD')
+    const quotes = Quotes.filter(quote => flight.QuoteIds.includes(quote.QuoteId))
+    if (quotes) {
+      [flight.quote] = quotes
+    }
+    const quotePlace = Places.find(place => place.PlaceId === flight.quote.OutboundLeg.DestinationId)
+    flight.quote.DestinationPlace = quotePlace
+    const originPlace = Places.find(place => place.PlaceId === flight.OriginId)
+    if (originPlace) {
+      flight.OriginPlace = originPlace
+    }
+    const destinationPlace = Places.find(place => place.PlaceId === flight.DestinationId)
+    if (destinationPlace) {
+      flight.DestinationPlace = destinationPlace
+    }
+  })
+  return cheapestFlights.map(flight => {
+    return {
+      originPlace: {
+        iataCode: flight.OriginPlace.IataCode,
+        name: flight.OriginPlace.Name,
+        type: flight.OriginPlace.Type,
+        cityId: flight.OriginPlace.CityId,
+        countryName: flight.OriginPlace.CountryName,
+      },
+      destinationPlace: {
+        iataCode: flight.quote.DestinationPlace.IataCode,
+        name: flight.quote.DestinationPlace.Name,
+        type: flight.quote.DestinationPlace.Type,
+        cityId: flight.quote.DestinationPlace.CityId,
+        countryName: flight.quote.DestinationPlace.CountryName,
+      },
+      price: flight.Price,
+      direct: flight.quote.Direct,
+      referralLink: generateReferralLink(flight),
+      inboundDate: flight.InboundDate,
+      outboundDate: flight.OutboundDate,
+    }
+  })
+}
+module.exports.flights = async(event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false
   const { queryStringParameters } = event
-  const { outboundDate, inboundDate, originCity } = queryStringParameters
+  const { outboundDate, inboundDate, originCity, currency, locale } = queryStringParameters
   const nearestAirportCity = await getNearestAirportCity(originCity)
   const country = await getCountryByCity(originCity)
-  const suggestion = await skyScannerClient.get(`/apiservices/autosuggest/v1.0/${country}/EUR/it-IT/?query=${nearestAirportCity}`)
+  let suggestion
+  try {
+    suggestion = await skyScannerClient.get(`/apiservices/autosuggest/v1.0/${country}/${currency}/${locale}/?query=${nearestAirportCity}`)
+  } catch (error) {
+    const errorResponse = getResponseObject(500, {
+      errorMessage: 'Skyscanner API error',
+      error,
+    })
+    return callback(errorResponse, null)
+  }
   const { data } = suggestion
 
   const originPlaceSkyId = data.Places[0].PlaceId
-
-  const results = await skyScannerClient.get(`/apiservices/browseroutes/v1.0/IT/EUR/it-IT/${originPlaceSkyId}/anywhere/${moment(outboundDate).format('YYYY-MM-DD')}/${moment(inboundDate).format('YYYY-MM-DD')}`)
+  let results
+  try {
+    results = await skyScannerClient.get(`/apiservices/browseroutes/v1.0/${country}/${currency}/${locale}/${originPlaceSkyId}/anywhere/${moment(outboundDate).format('YYYY-MM-DD')}/${moment(inboundDate).format('YYYY-MM-DD')}`)
+  } catch (error) {
+    const errorResponse = getResponseObject(500, {
+      errorMessage: 'Skyscanner API error',
+      error,
+    })
+    return callback(errorResponse, null)
+  }
 
   const { data: flightResponse } = results
 
@@ -65,29 +144,10 @@ module.exports.getFlights = async(event, context, callback) => {
     return 0
   })
   const cheapestFlights = sortedFlights.slice(0, 5)
+  const cleanFlightsResponse = getFlightsResponse(cheapestFlights, Quotes, Places, inboundDate, outboundDate)
 
-  cheapestFlights.forEach(flight => {
-    flight.InboundDate = moment(inboundDate).format('YYYY-MM-DD')
-    flight.OutboundDate = moment(outboundDate).format('YYYY-MM-DD')
-    const quotes = Quotes.filter(quote => flight.QuoteIds.includes(quote.QuoteId))
-    if (quotes) {
-      flight.Quotes = quotes
-    }
-    flight.Quotes.forEach(quote => {
-      const quotePlace = Places.find(place => place.PlaceId === quote.OutboundLeg.DestinationId)
-      quote.DestinationPlace = quotePlace
-    })
-    const originPlace = Places.find(place => place.PlaceId === flight.OriginId)
-    if (originPlace) {
-      flight.OriginPlace = originPlace
-    }
-    const destinationPlace = Places.find(place => place.PlaceId === flight.DestinationId)
-    if (destinationPlace) {
-      flight.DestinationPlace = destinationPlace
-    }
-  })
 
-  const response = getResponseObject(200, cheapestFlights)
+  const response = getResponseObject(200, cleanFlightsResponse)
   callback(null, response)
 }
 
