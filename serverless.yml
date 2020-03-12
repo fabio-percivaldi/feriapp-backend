@@ -51,12 +51,6 @@ functions:
     environment:
       GOOGLE_API_URL: ${env:GOOGLE_API_URL}
       GOOGLE_API_KEY: ${env:GOOGLE_API_KEY}
-    vpc:
-     securityGroupIds:
-      - ${env:SECURITY_GROUP}
-     subnetIds:
-      - ${env:SUBNET_1}
-      - ${env:SUBNET_2}
     events:
       - http: 
           path: bridges
@@ -65,13 +59,12 @@ functions:
           cors: 
             origin: '*'
             headers:
-                - Content-Type
-                - X-Amz-Date
-                - Authorization
-                - X-Api-Key
-                - X-Amz-Security-Token
-                - X-Amz-User-Agent
-                - username
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
           # authorizer:
           #     name: feriapp-user-pool-auth
           #     arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
@@ -81,12 +74,6 @@ functions:
     environment:
       GOOGLE_API_URL: ${env:GOOGLE_API_URL}
       GOOGLE_API_KEY: ${env:GOOGLE_API_KEY}
-    vpc:
-      securityGroupIds:
-      - ${env:SECURITY_GROUP}
-      subnetIds:
-      - ${env:SUBNET_1}
-      - ${env:SUBNET_2}
     events:
       - http: 
           path: getHolidaysByCity
@@ -100,13 +87,12 @@ functions:
           cors: 
             origin: '*'
             headers:
-                - Content-Type
-                - X-Amz-Date
-                - Authorization
-                - X-Api-Key
-                - X-Amz-Security-Token
-                - X-Amz-User-Agent
-                - username
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
           # authorizer:
           #     name: feriapp-user-pool-auth
           #     arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
@@ -132,13 +118,12 @@ functions:
           cors: 
             origin: '*'
             headers:
-                - Content-Type
-                - X-Amz-Date
-                - Authorization
-                - X-Api-Key
-                - X-Amz-Security-Token
-                - X-Amz-User-Agent
-                - username
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
           # authorizer:
           #     name: feriapp-user-pool-auth
           #     arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
@@ -166,12 +151,6 @@ functions:
       RAPID_API_KEY: ${env:RAPID_API_KEY}
       GOOGLE_API_URL: ${env:GOOGLE_API_URL}
       GOOGLE_API_KEY: ${env:GOOGLE_API_KEY}
-    vpc:
-      securityGroupIds:
-        - ${env:SECURITY_GROUP}
-      subnetIds:
-        - ${env:SUBNET_1}
-        - ${env:SUBNET_2}
     events:
       - http: 
           path: flights
@@ -189,13 +168,12 @@ functions:
           cors: 
             origin: '*'
             headers:
-                - Content-Type
-                - X-Amz-Date
-                - Authorization
-                - X-Api-Key
-                - X-Amz-Security-Token
-                - X-Amz-User-Agent
-                - username
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
           # authorizer:
           #     name: feriapp-user-pool-auth
           #     arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF

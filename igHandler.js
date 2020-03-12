@@ -26,17 +26,17 @@ module.exports.updateIgMedia = async(event, context, callback) => {
   const { data } = listResponse.data
   const recentMedia = data.slice(0, 5)
   await Promise.all(recentMedia.map(media => {
-    return igClient.get(`${media.id}?access_token=${IG_ACCESS_TOKEN}&fields=caption,media_url,permalink`)
+    return igClient.get(`${media.id}?access_token=${IG_ACCESS_TOKEN}&fields=caption,media_url,permalink,timestamp`)
   }))
     .then(async responses => {
       mediaIds = responses.map(resp => resp.data.id)
-
       await Media.bulkCreate(responses.map(response => {
         return {
           mediaId: response.data.id,
           mediaUrl: response.data.media_url,
           permaurl: response.data.permalink,
           caption: response.data.caption,
+          timestamp: response.data.timestamp,
         }
       }))
       const response = {

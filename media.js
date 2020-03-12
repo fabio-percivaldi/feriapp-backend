@@ -30,6 +30,9 @@ Media.init({
   caption: {
     type: Sequelize.STRING,
   },
+  timestamp: {
+    type: Sequelize.STRING,
+  },
 }, {
   sequelize,
   modelName: 'media',
