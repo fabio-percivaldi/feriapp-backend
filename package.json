@@ -33,6 +33,7 @@
     "serverless": "^1.65.0",
     "serverless-dotenv-plugin": "^2.1.1",
     "serverless-plugin-dotenv": "^1.0.0",
-    "serverless-plugin-warmup": "^4.7.1-rc.1"
+    "serverless-plugin-warmup": "^4.7.1-rc.1",
+    "serverless-reqvalidator-plugin": "^1.0.3"
   }
 }

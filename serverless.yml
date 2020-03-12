@@ -16,6 +16,7 @@ service: feriapp # NOTE: update this with your service name
 plugins:
   - serverless-plugin-dotenv
   - serverless-plugin-warmup
+  - serverless-reqvalidator-plugin
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
 # frameworkVersion: "=X.X.X"
@@ -33,7 +34,10 @@ provider:
 # you can overwrite defaults here
 #  stage: dev
   region: eu-west-1
-
+  apiKeys: 
+    - front-end-key
+    - android-key
+    - ios-key
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:
     - Effect: 'Allow'
@@ -57,6 +61,7 @@ functions:
       - http: 
           path: bridges
           method: post
+          private: true
           cors: 
             origin: '*'
             headers:
@@ -67,9 +72,9 @@ functions:
                 - X-Amz-Security-Token
                 - X-Amz-User-Agent
                 - username
-          authorizer:
-              name: feriapp-user-pool-auth
-              arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
+          # authorizer:
+          #     name: feriapp-user-pool-auth
+          #     arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
   
   getHolidaysByCity:
     handler: bridgesHandler.getHolidaysByCity
@@ -86,6 +91,12 @@ functions:
       - http: 
           path: getHolidaysByCity
           method: get
+          private: true
+          reqValidatorName: 'xMyRequestValidator'
+          request: 
+            parameters:
+              querystrings:
+                city: true
           cors: 
             origin: '*'
             headers:
@@ -96,9 +107,9 @@ functions:
                 - X-Amz-Security-Token
                 - X-Amz-User-Agent
                 - username
-          authorizer:
-              name: feriapp-user-pool-auth
-              arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
+          # authorizer:
+          #     name: feriapp-user-pool-auth
+          #     arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
 
   igMedia:
     handler: igHandler.igMedia
@@ -117,6 +128,7 @@ functions:
       - http: 
           path: igMedia
           method: get
+          private: true
           cors: 
             origin: '*'
             headers:
@@ -127,9 +139,9 @@ functions:
                 - X-Amz-Security-Token
                 - X-Amz-User-Agent
                 - username
-          authorizer:
-              name: feriapp-user-pool-auth
-              arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
+          # authorizer:
+          #     name: feriapp-user-pool-auth
+          #     arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
 
   updateIgMedia: 
     handler: igHandler.updateIgMedia
@@ -164,6 +176,8 @@ functions:
       - http: 
           path: flights
           method: get
+          private: true
+          reqValidatorName: 'xMyRequestValidator'
           request: 
             parameters:
               querystrings:
@@ -182,8 +196,16 @@ functions:
                 - X-Amz-Security-Token
                 - X-Amz-User-Agent
                 - username
-          authorizer:
-              name: feriapp-user-pool-auth
-              arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
+          # authorizer:
+          #     name: feriapp-user-pool-auth
+          #     arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
           
-        
+resources:
+  Resources:
+    xMyRequestValidator:  
+      Type: "AWS::ApiGateway::RequestValidator"
+      Properties:
+        Name: 'querystring-parameters-validator'
+        RestApiId: 
+          Ref: ApiGatewayRestApi
+        ValidateRequestParameters: true
