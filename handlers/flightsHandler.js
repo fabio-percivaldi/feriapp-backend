@@ -11,7 +11,7 @@ const {
   SKYSCANNER_API_HOST,
   TRAVELPAYOUT_MARKER,
 } = process.env
-const { getResponseObject, getCountryByCity } = require('./common')
+const { getResponseObject, getCountryByCity } = require('../common')
 const BASE_REFERRAL_URL = 'https://search.jetradar.com/flights/?'
 const airportsfinderClient = axios.create({
   baseURL: `https://${AERODATABOX_API_HOST}`,

@@ -1,13 +1,13 @@
 /* eslint-disable max-statements */
 'use strict'
 const logger = require('pino')()
-const Kazzenger = require('./src/kazzenger')
+const Kazzenger = require('../src/kazzenger')
 const moment = require('moment')
 
 const Holidays = require('date-holidays')
 const PUBLIC_HOLIDAY = 'public'
 
-const { getResponseObject, getCountryByCity } = require('./common')
+const { getResponseObject, getCountryByCity } = require('../common')
 
 module.exports.bridges = async(event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false
