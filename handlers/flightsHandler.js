@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /* eslint-disable max-statements */
 'use strict'
 
@@ -28,7 +29,7 @@ const skyScannerClient = axios.create({
   },
 })
 const getNearestAirportCity = async(city) => {
-  const googleResponse = await axios.get(`${GOOGLE_API_URL}?address=${city}&&key=${GOOGLE_API_KEY}`)
+  const googleResponse = await axios.get(`${GOOGLE_API_URL}/geocode/json?address=${city}&key=${GOOGLE_API_KEY}`)
   const [result] = googleResponse.data.results
   const { geometry } = result
   const { location } = geometry
@@ -103,7 +104,7 @@ const getFlightsResponse = (cheapestFlights, Quotes, Places, inboundDate, outbou
 module.exports.flights = async(event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false
   const { queryStringParameters } = event
-  const { outboundDate, inboundDate, originCity, currency, locale } = queryStringParameters
+  const { outboundDate, inboundDate, originCity, currency = 'USD', locale = 'en-EN' } = queryStringParameters
   const nearestAirportCity = await getNearestAirportCity(originCity)
   const country = await getCountryByCity(originCity)
   let suggestion
@@ -151,4 +152,50 @@ module.exports.flights = async(event, context, callback) => {
   callback(null, response)
 }
 
+module.exports.cityPhoto = async(event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false
+  const { queryStringParameters } = event
+  const { city, maxWidth = 400, maxHeight = 400 } = queryStringParameters
+  let placeResponse
+  try {
+    placeResponse = await axios.get(`${GOOGLE_API_URL}/geocode/json?address=${city}&key=${GOOGLE_API_KEY}`)
+  } catch (error) {
+    const response = getResponseObject(500, error)
+    return callback(response)
+  }
+
+  const [result] = placeResponse.data.results
+  const { place_id } = result
+  let placeDetail
+  try {
+    placeDetail = await axios.get(`${GOOGLE_API_URL}/place/details/json?place_id=${place_id}&fields=photos&key=${GOOGLE_API_KEY}`)
+  } catch (error) {
+    const response = getResponseObject(500, error)
+    return callback(response)
+  }
+  const { photos } = placeDetail.data.result
+  const [photo] = photos
+  const { photo_reference } = photo
+
+  let photoDetail
+  try {
+    photoDetail = await axios.get(`${GOOGLE_API_URL}/place/photo?photoreference=${photo_reference}&maxwidth=${maxWidth}&maxheight=${maxHeight}&fields=photos&key=${GOOGLE_API_KEY}`, {
+      responseType: 'arraybuffer',
+    })
+  } catch (error) {
+    const response = getResponseObject(500, error)
+    return callback(response)
+  }
+  const response = {
+    'statusCode': 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': true,
+      'Content-Type': photoDetail.headers['content-type'],
+    },
+    body: photoDetail.data.toString('base64'),
+    'isBase64Encoded': true,
+  }
+  callback(null, response)
+}
 

@@ -17,6 +17,7 @@ plugins:
   - serverless-plugin-dotenv
   - serverless-plugin-warmup
   - serverless-reqvalidator-plugin
+  - serverless-apigw-binary
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
 # frameworkVersion: "=X.X.X"
@@ -25,7 +26,9 @@ custom:
     default: true
     schedule: 'cron(0/5 8-17 ? * MON-FRI *)'
     prewarm: true
-    
+  apigwBinary:
+    types:
+      - '*/*'
 
 provider:
   name: aws
@@ -143,6 +146,7 @@ functions:
       subnetIds:
         - ${env:SUBNET_1}
         - ${env:SUBNET_2}
+  
   flights:
     handler: handlers/flightsHandler.flights
     environment:
@@ -177,6 +181,7 @@ functions:
           # authorizer:
           #     name: feriapp-user-pool-auth
           #     arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF
+  
   betaSubscribe:
     handler: handlers/betaSubscriptionHandler.betaSubscribe
     environment:
@@ -201,6 +206,34 @@ functions:
               - X-Api-Key
               - X-Amz-Security-Token
               - X-Amz-User-Agent
+  cityPhoto:
+    handler: handlers/flightsHandler.cityPhoto
+    environment:
+      GOOGLE_API_URL: ${env:GOOGLE_API_URL}
+      GOOGLE_API_KEY: ${env:GOOGLE_API_KEY}
+    events:
+      - http: 
+          path: cityPhoto
+          method: get
+          private: true
+          contentHandling: CONVERT_TO_BINARY
+          reqValidatorName: 'xMyRequestValidator'
+          request: 
+            parameters:
+              querystrings:
+                city: true
+          cors: 
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+          # authorizer:
+          #     name: feriapp-user-pool-auth
+          #     arn:  arn:aws:cognito-idp:eu-west-1:647960870003:userpool/eu-west-1_kOBL2eakF              
 resources:
   Resources:
     xMyRequestValidator:  
