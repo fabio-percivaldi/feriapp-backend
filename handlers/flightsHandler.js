@@ -4,8 +4,8 @@
 
 const axios = require('axios')
 const moment = require('moment')
+const { findNearestAirport } = require('../dbModel/airport')
 const {
-  AERODATABOX_API_HOST,
   RAPID_API_KEY,
   GOOGLE_API_URL,
   GOOGLE_API_KEY,
@@ -14,13 +14,7 @@ const {
 } = process.env
 const { getResponseObject, getCountryByCity } = require('../common')
 const BASE_REFERRAL_URL = 'https://search.jetradar.com/flights/?'
-const airportsfinderClient = axios.create({
-  baseURL: `https://${AERODATABOX_API_HOST}`,
-  headers: {
-    'x-rapidapi-host': AERODATABOX_API_HOST,
-    'x-rapidapi-key': RAPID_API_KEY,
-  },
-})
+
 const skyScannerClient = axios.create({
   baseURL: `https://${SKYSCANNER_API_HOST}`,
   headers: {
@@ -28,15 +22,35 @@ const skyScannerClient = axios.create({
     'x-rapidapi-key': RAPID_API_KEY,
   },
 })
-const getNearestAirportCity = async(city) => {
-  const googleResponse = await axios.get(`${GOOGLE_API_URL}/geocode/json?address=${city}&key=${GOOGLE_API_KEY}`)
+
+const getNearestAirportCity = async(city, callback) => {
+  let googleResponse
+  try {
+    googleResponse = await axios.get(`${GOOGLE_API_URL}/geocode/json?address=${city}&key=${GOOGLE_API_KEY}`)
+  } catch (gerror) {
+    const errorResponse = getResponseObject(500, {
+      errorMessage: 'Google geocode API error',
+      error: gerror,
+    })
+    return callback(errorResponse, null)
+  }
   const [result] = googleResponse.data.results
   const { geometry } = result
   const { location } = geometry
-  const results = await airportsfinderClient.get(`/airports/search/location/${location.lat}/${location.lng}/km/100/5`)
-  const [nearestResult] = results.data.items
+  const { lat, lng } = location
+  let results
+  try {
+    results = await findNearestAirport(lat, lng)
+  } catch (airportError) {
+    const errorResponse = getResponseObject(500, {
+      errorMessage: 'Airports finder API error',
+      error: airportError,
+    })
+    return callback(errorResponse, null)
+  }
+  const [nearestResult] = results
   if (nearestResult) {
-    return nearestResult.municipalityName
+    return nearestResult.city
   }
   return null
 }
@@ -105,7 +119,7 @@ module.exports.flights = async(event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false
   const { queryStringParameters } = event
   const { outboundDate, inboundDate, originCity, currency = 'USD', locale = 'en-EN' } = queryStringParameters
-  const nearestAirportCity = await getNearestAirportCity(originCity)
+  const nearestAirportCity = await getNearestAirportCity(originCity, callback)
   const country = await getCountryByCity(originCity)
   let suggestion
   try {
@@ -130,7 +144,6 @@ module.exports.flights = async(event, context, callback) => {
     })
     return callback(errorResponse, null)
   }
-
   const { data: flightResponse } = results
 
   const { Routes, Places, Quotes } = flightResponse

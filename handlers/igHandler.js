@@ -2,7 +2,7 @@
 
 const axios = require('axios')
 const logger = require('pino')()
-const { Media } = require('./media')
+const { Media } = require('../dbModel/media')
 const { IG_ACCESS_TOKEN, IG_CLIENT_ID } = process.env
 
 const igClient = axios.create({

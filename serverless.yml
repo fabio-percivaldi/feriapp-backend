@@ -28,7 +28,10 @@ custom:
     prewarm: true
   apigwBinary:
     types:
-      - '*/*'
+      - 'image/jpeg'
+      - 'image/jpg'
+      - 'image/png'
+      - 'image/bmp'
 
 provider:
   name: aws
@@ -155,6 +158,13 @@ functions:
       RAPID_API_KEY: ${env:RAPID_API_KEY}
       GOOGLE_API_URL: ${env:GOOGLE_API_URL}
       GOOGLE_API_KEY: ${env:GOOGLE_API_KEY}
+      MYSQL_URL: ${env:MYSQL_URL}
+    vpc:
+      securityGroupIds:
+        - ${env:SECURITY_GROUP}
+      subnetIds:
+        - ${env:SUBNET_1}
+        - ${env:SUBNET_2}
     events:
       - http: 
           path: flights

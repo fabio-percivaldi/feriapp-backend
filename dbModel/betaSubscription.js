@@ -2,7 +2,7 @@
 
 const Sequelize = require('sequelize')
 const { MYSQL_URL } = process.env
-const sequelize = new Sequelize(MYSQL_URL, {
+const sequelize = new Sequelize(`${MYSQL_URL}/ig`, {
   dialect: 'mysql',
   pool: {
     max: 5,
