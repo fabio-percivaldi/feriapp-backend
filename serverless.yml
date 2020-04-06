@@ -32,7 +32,7 @@ custom:
       - 'image/jpg'
       - 'image/png'
       - 'image/bmp'
-
+      - 'image/*'
 provider:
   name: aws
   runtime: nodejs12.x
@@ -159,6 +159,7 @@ functions:
       GOOGLE_API_URL: ${env:GOOGLE_API_URL}
       GOOGLE_API_KEY: ${env:GOOGLE_API_KEY}
       MYSQL_URL: ${env:MYSQL_URL}
+      AFFILIATION_PREFIX: ${env:AFFILIATION_PREFIX}
     vpc:
       securityGroupIds:
         - ${env:SECURITY_GROUP}
@@ -221,6 +222,7 @@ functions:
     environment:
       GOOGLE_API_URL: ${env:GOOGLE_API_URL}
       GOOGLE_API_KEY: ${env:GOOGLE_API_KEY}
+      MYSQL_URL: ${env:MYSQL_URL}
     events:
       - http: 
           path: cityPhoto

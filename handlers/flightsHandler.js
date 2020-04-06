@@ -10,10 +10,9 @@ const {
   GOOGLE_API_URL,
   GOOGLE_API_KEY,
   SKYSCANNER_API_HOST,
-  TRAVELPAYOUT_MARKER,
+  AFFILIATION_PREFIX,
 } = process.env
 const { getResponseObject, getCountryByCity } = require('../common')
-const BASE_REFERRAL_URL = 'https://search.jetradar.com/flights/?'
 
 const skyScannerClient = axios.create({
   baseURL: `https://${SKYSCANNER_API_HOST}`,
@@ -57,20 +56,10 @@ const getNearestAirportCity = async(city, callback) => {
 const generateReferralLink = (flight) => {
   const originIata = flight.OriginPlace.IataCode
   const destinationIata = flight.quote.DestinationPlace.IataCode
-  const inboundDate = flight.InboundDate
-  const outboundDate = flight.OutboundDate
-  return `${BASE_REFERRAL_URL}origin_iata=${originIata}\
-&destination_iata=${destinationIata}\
-&depart_date=${outboundDate}\
-&return_date=${inboundDate}\
-&with_request=false\
-&adults=1\
-&children=0\
-&infants=0\
-&trip_class=0\
-&locale=en\
-&one_way=false\
-&marker=${TRAVELPAYOUT_MARKER}`
+  const inboundDate = moment(flight.InboundDate).format('YYMMDD')
+  const outboundDate = moment(flight.OutboundDate).format('YYMMDD')
+  const skyscannerUrl = `https://www.skyscanner.it/trasporti/voli/${originIata}/${destinationIata}/${outboundDate}/${inboundDate}/?adults=1&children=0&adultsv2=1&childrenv2=&infants=0&cabinclass=economy&rtn=1&preferdirects=false&outboundaltsenabled=false&inboundaltsenabled=false&ref=home`
+  return `${AFFILIATION_PREFIX}${encodeURI(skyscannerUrl)}`
 }
 const getFlightsResponse = (cheapestFlights, Quotes, Places, inboundDate, outboundDate) => {
   cheapestFlights.forEach(flight => {
