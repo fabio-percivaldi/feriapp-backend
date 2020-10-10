@@ -25,7 +25,8 @@ To call the API you should provide a input body that follow this format:
     region: null,
     city: '',
     daysOff: [0, 6] }
-    ```
+
+```
 
 # Run functions locally
 

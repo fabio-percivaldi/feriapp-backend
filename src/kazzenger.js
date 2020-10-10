@@ -5,6 +5,7 @@ const moment = require('moment')
 const Holidays = require('date-holidays')
 const MILLISECONDS_IN_A_DAY = 1000 * 60 * 60 * 24
 const PUBLIC_HOLIDAY = 'public'
+
 const addHolidays = (holidays, holidaysLib = this.holidays) => {
   const currentHolidays = holidaysLib.getHolidays()
   holidaysLib.init(this.country, this.state, this.region)
@@ -37,15 +38,11 @@ function Kazzenger({ country, daysOff, customHolidays }) {
   }
 }
 
-Kazzenger.prototype.isHolidayOrWeekend = function isHolidayOrWeekend(momentDay) {
+Kazzenger.prototype.isHolidayOrDaysOff = function isHolidayOrDaysOff(momentDay) {
   const isWeekend = this.daysOff.includes(parseInt(momentDay.format('d')))
   const holidays = this.holidays.getHolidays().filter(holiday => holiday.type === PUBLIC_HOLIDAY)
   const foundholiday = holidays.find(holiday => moment(holiday.date).format('MM-DD') === momentDay.format('MM-DD'))
-  return {
-    isWeekend,
-    isHoliday: Boolean(foundholiday),
-    holidayName: foundholiday ? foundholiday.name : null,
-  }
+  return isWeekend || Boolean(foundholiday)
 }
 
 Kazzenger.prototype.isDayOff = function isDayOff(date) {
@@ -181,18 +178,28 @@ Kazzenger.prototype.findWeekendBridge = function findWeekendBridge(holidays) {
     if (holidayDate.isBefore(moment())) {
       return
     }
-    const holidayWeekDay = holidayDate.weekday()
     let bridgeStart
     let bridgeEnd
-    if (holidayWeekDay === 1) {
-      bridgeStart = moment(holidayDate).subtract(2, 'days')
-      bridgeEnd = holidayDate
+    const dayBefore = moment(holidayDate).subtract(1, 'days')
+    const dayAfter = moment(holidayDate).add(1, 'days')
+    while (this.isHolidayOrDaysOff(dayBefore) || this.isHolidayOrDaysOff(dayAfter)) {
+      if (this.isHolidayOrDaysOff(dayBefore)) {
+        bridgeStart = moment(dayBefore)
+        dayBefore.subtract(1, 'days')
+        if (!this.isHolidayOrDaysOff(dayAfter)) {
+          bridgeEnd = moment(holidayDate)
+        }
+      }
+      if (this.isHolidayOrDaysOff(dayAfter)) {
+        bridgeEnd = moment(dayAfter)
+        dayAfter.add(1, 'days')
+        if (!this.isHolidayOrDaysOff(dayBefore)) {
+          bridgeStart = moment(holidayDate)
+        }
+      }
     }
-    if (holidayWeekDay === 5) {
-      bridgeEnd = moment(holidayDate).add(2, 'days')
-      bridgeStart = holidayDate
-    }
-    if (bridgeStart && bridgeEnd) {
+
+    if (bridgeStart && bridgeEnd && bridgeEnd.diff(bridgeStart, 'days') > 1) {
       const bridgeId = `${bridgeStart.format('YYYY-MM-DD')}-${bridgeEnd.format('YYYY-MM-DD')}`
 
       const bridge = {
@@ -200,9 +207,9 @@ Kazzenger.prototype.findWeekendBridge = function findWeekendBridge(holidays) {
         holidayDate: holidayDate.toDate(),
         start: bridgeStart.toDate(),
         end: bridgeEnd.toDate(),
-        holidaysCount: 3,
+        holidaysCount: bridgeEnd.diff(bridgeStart, 'days') + 1,
         weekdaysCount: 0,
-        daysCount: 3,
+        daysCount: bridgeEnd.diff(bridgeStart, 'days') + 1,
       }
       bridges.push(bridge)
     }

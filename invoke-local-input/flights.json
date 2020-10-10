@@ -1,0 +1,9 @@
+{
+    "queryStringParameters": {
+        "originCity": "Milano%20MI",
+        "outboundDate": "2020-10-20",
+        "inboundDate": "2020-10-25",
+        "currency": "EUR",
+        "locale": "it-IT"
+    }
+}

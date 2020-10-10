@@ -66,3 +66,7 @@ local.env
 
 #input for local invocation
 input
+
+#ENV 
+*.env
+!default.env
