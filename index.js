@@ -21,5 +21,5 @@ const bridgesSchema = require('./src/schemas/bridges')
 const { bridges } = require('./src/handlers/bridgesHandler')
 
 module.exports = customService(async function index(service) {
-    service.addRawCustomPlugin('POST', '/bridges', bridges, bridgesSchema)
+  service.addRawCustomPlugin('POST', '/bridges', bridges, bridgesSchema)
 })

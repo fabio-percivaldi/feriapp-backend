@@ -23,7 +23,7 @@ const getCountryByCity = async(city, reply) => {
   } catch (error) {
     logger.error('Google geocoding API error', error)
     reply.code(500)
-    return reply.send( {
+    return reply.send({
       errorMessage: 'Google geocoding API error',
     })
   }
@@ -31,10 +31,10 @@ const getCountryByCity = async(city, reply) => {
   const { address_components } = result
   const country = address_components.find(address => address.types.includes('country'))
   if (!country) {
-    const errorResponse = getResponseObject(500, {
+    reply.code(500)
+    return reply.send({
       errorMessage: `No country found given the input city: ${city}`,
     })
-    return callback(errorResponse, null)
   }
   logger.info('Country found', { country })
   return country.short_name
