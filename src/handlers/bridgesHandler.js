@@ -1,23 +1,18 @@
 /* eslint-disable max-statements */
 'use strict'
 const logger = require('pino')()
-const Kazzenger = require('../src/kazzenger')
+const Kazzenger = require('../kazzenger')
 const moment = require('moment')
 
 const Holidays = require('date-holidays')
 const PUBLIC_HOLIDAY = 'public'
 
-const { getResponseObject, getCountryByCity } = require('../common')
+const { getResponseObject, getCountryByCity } = require('../../common')
 
-module.exports.bridges = async(event, context, callback) => {
-  context.callbackWaitsForEmptyEventLoop = false
-  if (event.source === 'serverless-plugin-warmup') {
-    logger.info('WarmUP - Lambda is warm!')
-    return callback(null, 'Lambda is warm!')
-  }
-  const requestBody = JSON.parse(event.body)
-  const { dayOfHolidays, customHolidays, city, daysOff } = requestBody
-  const country = await getCountryByCity(city)
+module.exports.bridges = async(req, reply) => {
+  const { body } = req
+  const { dayOfHolidays, customHolidays, city, daysOff } = body
+  const country = await getCountryByCity(city, reply)
   const config = { country, daysOff, customHolidays }
   const kazzenger = new Kazzenger(config)
   const now = new Date()
@@ -45,8 +40,7 @@ module.exports.bridges = async(event, context, callback) => {
       return years
     })
 
-  const response = getResponseObject(200, calculatedBridges)
-  callback(null, response)
+  reply.send(calculatedBridges)
 }
 
 module.exports.getHolidaysByCity = async(event, context, callback) => {

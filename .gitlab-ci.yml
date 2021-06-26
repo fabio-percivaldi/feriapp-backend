@@ -1,0 +1,29 @@
+include:
+  - project: 'platform/pipelines-templates'
+    file: '/build/node/template-node-npm.yml'
+    ref: master
+  - project: 'platform/pipelines-templates'
+    file: '/build/node/template-node-npm-test-latest.yml'
+    ref: master
+
+default:
+  image: node:12.19.0-alpine
+
+variables:
+  IMAGE_NAME: feriapp/feriapp-backend
+
+test:
+  variables:
+    MONGO_HOST_CI: 'mongo:27017'
+
+  services:
+    - name: mongo:4.2
+      alias: mongo
+
+test-latest:
+  variables:
+    MONGO_HOST_CI: 'mongo:27017'
+
+  services:
+    - name: mongo
+      alias: mongo

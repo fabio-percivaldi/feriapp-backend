@@ -4,7 +4,6 @@ const axios = require('axios')
 
 const { GOOGLE_API_URL, GOOGLE_API_KEY } = process.env
 
-
 const getResponseObject = (statusCode, body) => {
   return {
     isBase64Encoded: false,
@@ -17,16 +16,16 @@ const getResponseObject = (statusCode, body) => {
   }
 }
 
-const getCountryByCity = async(city, callback) => {
+const getCountryByCity = async(city, reply) => {
   let googleResponse
   try {
     googleResponse = await axios.get(`${GOOGLE_API_URL}/geocode/json?address=${city}&key=${GOOGLE_API_KEY}`)
   } catch (error) {
     logger.error('Google geocoding API error', error)
-    const errorResponse = getResponseObject(500, {
+    reply.code(500)
+    return reply.send( {
       errorMessage: 'Google geocoding API error',
     })
-    return callback(errorResponse, null)
   }
   const [result] = googleResponse.data.results
   const { address_components } = result
