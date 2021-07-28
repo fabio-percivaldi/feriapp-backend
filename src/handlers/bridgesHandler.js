@@ -7,7 +7,7 @@ const moment = require('moment')
 const Holidays = require('date-holidays')
 const PUBLIC_HOLIDAY = 'public'
 
-const { getResponseObject, getCountryByCity } = require('../../common')
+const { getCountryByCity } = require('../../common')
 
 module.exports.bridges = async(req, reply) => {
   const { body } = req
@@ -43,20 +43,21 @@ module.exports.bridges = async(req, reply) => {
   reply.send(calculatedBridges)
 }
 
-module.exports.getHolidaysByCity = async(event, context, callback) => {
-  context.callbackWaitsForEmptyEventLoop = false
-  if (event.source === 'serverless-plugin-warmup') {
-    logger.info('WarmUP - Lambda is warm!')
-    return callback(null, 'Lambda is warm!')
-  }
-  const { queryStringParameters } = event
-  const { city } = queryStringParameters
+module.exports.getHolidaysByCity = async(req, reply) => {
+  const { query } = req
+  const { city } = query
 
-  const country = await getCountryByCity(city)
+  let country
+  try {
+    country = await getCountryByCity(city)
+  } catch (error) {
+    logger.error('Google APIs error: ', error.message)
+  }
   const holidaysLib = new Holidays()
   holidaysLib.init(country)
 
   const publicHolidays = holidaysLib.getHolidays()
     .filter(holiday => holiday.type === PUBLIC_HOLIDAY)
-  return getResponseObject(200, publicHolidays)
+
+  reply.send(publicHolidays)
 }
