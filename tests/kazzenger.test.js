@@ -10,24 +10,24 @@ tap.test('kazzenger function', t => {
     const kazzenger = new Kazzenger(config)
     const expectedResponse = [
       {
-        start: moment('2019-12-21T22:00:00.000Z').utc()
+        start: moment('2019-12-21T00:00:00.000Z').utc()
           .toDate(),
-        end: moment('2019-12-26T22:00:00.000Z').utc()
+        end: moment('2019-12-26T00:00:00.000Z').utc()
           .toDate(),
         holidaysCount: 4,
         weekdaysCount: 2,
         daysCount: 6 },
-      { start: moment('2019-12-25T22:00:00.000Z').utc()
+      { start: moment('2019-12-25T00:00:00.000Z').utc()
         .toDate(),
-      end: moment('2019-12-29T22:00:00.000Z').utc()
+      end: moment('2019-12-29T00:00:00.000Z').utc()
         .toDate(),
       holidaysCount: 4,
       weekdaysCount: 1,
       daysCount: 5 }]
     const actualResponse = kazzenger.bridges({
-      start: moment('2019-09-01').utc()
+      start: moment('2019-09-01T00:00:00.000Z').utc()
         .toDate(),
-      end: moment('2019-12-31').utc()
+      end: moment('2019-12-31T00:00:00.000Z').utc()
         .toDate(),
       maxHolidaysDistance: 2,
       maxAvailability: 2,
