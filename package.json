@@ -1,6 +1,6 @@
 {
   "name": "feriapp-backend",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "**Edit a file, create a new file, and clone from Bitbucket in under 2 minutes**",
   "main": "index.js",
   "scripts": {
