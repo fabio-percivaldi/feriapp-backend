@@ -1,5 +1,5 @@
 {
-  "name": "kazzenger-backend",
+  "name": "feriapp-backend",
   "version": "0.0.1",
   "description": "**Edit a file, create a new file, and clone from Bitbucket in under 2 minutes**",
   "main": "index.js",
@@ -27,7 +27,6 @@
   },
   "author": "",
   "license": "ISC",
-  "homepage": "https://bitbucket.org/kazzenger/kazzenger-backend#readme",
   "dependencies": {
     "@mia-platform/custom-plugin-lib": "^2.3.0",
     "axios": "^0.19.2",
