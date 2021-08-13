@@ -18,9 +18,13 @@
 
 const customService = require('@mia-platform/custom-plugin-lib')()
 const bridgesSchema = require('./src/schemas/bridges')
+const getHolidaysByCitySchema = require('./src/schemas/getHolidaysByCity')
+const getIgMediaSchema = require('./src/schemas/getIgMedia')
 const { bridges, getHolidaysByCity } = require('./src/handlers/bridgesHandler')
+const { getIgMedia } = require('./src/handlers/igHandler')
 
 module.exports = customService(async function index(service) {
   service.addRawCustomPlugin('POST', '/bridges', bridges, bridgesSchema)
-  service.addRawCustomPlugin('GET', '/getHolidaysByCity', getHolidaysByCity, getHolidaysByCity)
+  service.addRawCustomPlugin('GET', '/getHolidaysByCity', getHolidaysByCity, getHolidaysByCitySchema)
+  service.addRawCustomPlugin('GET', '/igMedia', getIgMedia, getIgMediaSchema)
 })
