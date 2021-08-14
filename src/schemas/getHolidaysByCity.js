@@ -18,22 +18,11 @@ module.exports = {
       items: {
         type: 'object',
         properties: {
-          year: {
-            type: 'string',
-          },
-          holidays: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                date: {},
-                start: {},
-                end: {},
-                name: {},
-                type: {},
-              },
-            },
-          },
+          date: {},
+          start: {},
+          end: {},
+          name: {},
+          type: {},
         },
       },
     },
