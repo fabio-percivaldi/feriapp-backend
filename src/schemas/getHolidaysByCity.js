@@ -1,12 +1,9 @@
 'use strict'
 
 module.exports = {
-  params: {
+  query: {
     type: 'object',
     properties: {
-      year: {
-        type: 'string',
-      },
       city: {
         type: 'string',
       },
