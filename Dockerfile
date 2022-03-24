@@ -22,7 +22,7 @@ LABEL maintainer="undefined" \
       name="feriapp-backend" \
       description="" \
       eu.mia-platform.url="https://www.mia-platform.eu" \
-      eu.mia-platform.version="0.2.1"
+      eu.mia-platform.version="0.2.2"
 
 ENV NODE_ENV=production
 ENV LOG_LEVEL=info
